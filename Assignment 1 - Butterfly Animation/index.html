@@ -1,0 +1,221 @@
+<!-- Graphics Example Code.  index.html - The web page document containing the canvas (drawing surface), that launches your javascript files.  By Garett //-->
+<!DOCTYPE html> <html> <head> <meta charset="UTF-8"/> <link rel="icon" href="assets/fav.ico">
+<script type="text/javascript" src="tinywebgl-ucla.js" ></script>  <!--  Javascript "include" files.  Any code in them gets executed as part of the page loading. //-->
+<script type="text/javascript" src="dependencies.js"   ></script>
+<script type="text/javascript"> "use strict"    
+  window.onload = function init()        // ********************* THE ENTRY POINT OF THE WHOLE PROGRAM STARTS HERE ********************* 
+    { window.contexts = {};                                                            // A global variable, "contexts".  Browsers support up to 16 WebGL contexts per page.
+      document.getElementById( "canvases" ).appendChild( Object.assign( document.createElement( "canvas" ), { id: "main_canvas", width: 800, height: 600 } ) );
+
+      const scenes  = [ "Butterfly_Scene", "Movement_Controls", "Global_Info_Table",]; // Register some scenes to the "Canvas_Manager" object -- which WebGL calls
+                                                                                       // upon every time a draw / keyboard / mouse event happens.  
+                                                                                           
+      Code_Manager.display_code( eval( scenes[0] ) );                                  // Display the code for our demo on the page, starting with the first scene in the list.
+      for( let list of [ core_dependencies, all_dependencies ] )
+      document.querySelector( "#class_list" ).rows[2].appendChild( Object.assign( document.createElement( "td" ), { 
+        innerHTML: list.reduce( (acc, x) => acc += "<a href='javascript:void(0);' onclick='Code_Manager.display_code(" + x + ")'>" + x + "</a><br>", "" ) } ) );        
+      document.getElementsByName( "main_demo_link" )[0].innerHTML = "<a href='javascript:void(0);' onclick='Code_Manager.display_code(" + scenes[0] + ")'>" + scenes[0] + "</a><br>";
+      document.querySelector("#code_display").innerHTML = "Below is the code for the demo that's running:<br>&nbsp;<br>" + document.querySelector("#code_display").innerHTML;
+      
+      contexts[ "main_canvas" ] = new Canvas_Manager( "main_canvas", Color.of( 0,0,0,1 ), scenes );   // Manage the WebGL canvas.  Second parameter sets background color.
+      for( let c in contexts ) contexts[ c ].render();     // Call render() for each WebGL context on this page.  Then render() will re-queue itself for more calls.
+    }
+
+// Below is the demo you will see when you run the program!    
+    
+class Butterfly_Scene extends Scene_Component  // Code your butterfly assignment below.  It is an example of drawing a hierarchical object using a "model_transform" matrix.
+{ constructor( context )
+    { super( context );
+      var shapes = { "box" :   new Cube(),                            // Load one of each of these shape definitions onto the GPU.  Once each Shape is there we 
+                     "ball":   new Subdivision_Sphere( 4 ) };         // re-use it many times per display() call to get multiple of that shape to appear in the scene.
+      this.submit_shapes( context, shapes );
+                                                                      // Define the global camera and projection matrices.  
+                                                                      // Arguments to perspective() are field of view, aspect ratio, near plane and far plane.
+      Object.assign( context.globals.graphics_state, { camera_transform: Mat4.translation([ 0,-10,-40 ]), projection_transform: Mat4.perspective( Math.PI/4, context.width/context.height, .1, 1000 ) } );
+      
+      Object.assign( this, { hover: false, t: 0,                  // Define a couple of data members of a Butterfly_Scene.
+                             yellow: context.get_instance( Phong_Model ).material( Color.of( .8, .8, .3,  1 ), .2, 1, .7, 40 ),  // Call material() on the Phong_Shader,
+                             brown:  context.get_instance( Phong_Model ).material( Color.of( .3, .3, .1,  1 ), .2, 1,  1, 40 ),  // which returns a special-made "material" 
+                             red:    context.get_instance( Phong_Model ).material( Color.of(  1,  0,  0, .9 ), .1, .7, 1, 40 ),  // (a JavaScript object)
+                             green:  context.get_instance( Phong_Model ).material( Color.of(  0, .5,  0,  1 ), .1, .7, 1, 40 ),
+                             blue:   context.get_instance( Phong_Model ).material( Color.of(  0,  0,  1, .8 ), .1, .7, 1, 40 ),
+                             purple:   context.get_instance( Phong_Model ).material( Color.of(  1,  0,  1, 1 ), .1, .7, 1, 40 ),
+                             white:   context.get_instance( Phong_Model ).material( Color.of(  1,  1,  1, 1 ), .7, .7, .7, 40 ),
+                             silver: context.get_instance( Phong_Model ).material( Color.of( .8, .8, .8,  1 ),  0,  1, 1, 40 ) } );
+
+
+    }
+  make_control_panel()                                                              // Draw the buttons, setup their actions and keyboard shortcuts, and monitor live variables.
+    { const globals = this.globals;
+      this.live_string( () => { return "Butterfly rotation angle: " + ( this.hover ? 0 : ( this.t % (2*Math.PI)).toFixed(2) ) + " radians" } );  this.new_line();
+      this.key_triggered_button( "Hover in place", "h", function() { this.hover ^= 1; } ); this.new_line();      
+    }  
+  draw_arm( graphics_state, model_transform )
+    { const arm = model_transform.times( Mat4.translation([ 0,0,4 ]) );
+      this.shapes.ball.draw( graphics_state, arm, this.blue );
+    }
+  display( graphics_state )
+    { graphics_state.lights = [ new Light( Vec.of(  30, 30,  34, 1 ), Color.of( 0, .4, 0, 1 ), 100000 ),         // Lights for Phong_Shader to use
+                                new Light( Vec.of( -10, 20, -14, 0 ), Color.of( 1, 1, .3, 1 ), 100    ) ]
+
+                                
+                                
+      /**********************************
+      Start coding down here!!!!
+      **********************************/                                                                                
+      
+      this.shapes.box.draw(graphics_state, Mat4.scale([15, .1, 15]), this.green);                          
+      this.t = graphics_state.animation_time/1000; 
+
+      let b_center = Mat4.identity().times(Mat4.translation(Vec.of(0, 10, 0)));
+      let angle_time = Math.abs(2000 - graphics_state.animation_time%4000)
+
+      if (!this.hover) {
+        let height = (angle_time/4000)*5
+        b_center = b_center.times(Mat4.rotation(-this.t, Vec.of(0, 1, 0))).times(Mat4.translation(Vec.of(7, -height, 0)));
+      } 
+
+
+      let head_center = this.draw_body(graphics_state, b_center);
+      this.draw_wings(graphics_state, b_center, angle_time);
+      this.draw_legs(graphics_state, b_center, angle_time); 
+      this.draw_antennas(graphics_state, head_center, angle_time);                                                                       
+    } 
+
+  draw_body(graphics_state, b_center) {
+    let thorax_transform = b_center
+    let head_transform = thorax_transform.times(Mat4.translation(Vec.of(0, 0, 5.5)));
+    let abdomen_transform = thorax_transform.times(Mat4.translation(Vec.of(0, 0, -6)));
+
+    let thorax_size = Mat4.scale([ 1,1,4 ]);
+    let head_size = Mat4.scale([1.5, 1.5 ,1.5]);
+    let abdomen_size = Mat4.scale([1, 1, 2]);
+
+    this.shapes.box.draw(graphics_state, thorax_transform.times(thorax_size), this.white);
+    this.shapes.ball.draw(graphics_state, head_transform.times(head_size), this.white);
+    this.shapes.ball.draw(graphics_state, abdomen_transform.times(abdomen_size), this.white);
+
+    return head_transform
+  }
+
+  draw_wings(graphics_state, b_center, angle_time) {
+    let wing_length = 4.0 / Math.sqrt(2)
+    let wing_size = Mat4.scale([wing_length, .25, wing_length])
+    let angle = Math.PI*(angle_time/4000)
+
+    let wings = Mat4.rotation(Math.PI/4, Vec.of(0, 1, 0))
+    let left_wings = Mat4.rotation(angle, Vec.of(0, 0, 1)).times(wings).times(Mat4.translation([wing_length, .25, wing_length]));
+    let right_wings = Mat4.rotation(-angle, Vec.of(0, 0, 1)).times(wings).times(Mat4.translation([-wing_length, .25, -wing_length]));
+
+    let left_front = b_center.times(Mat4.translation(Vec.of(1, 1, 4))).times(left_wings);
+    let left_back = b_center.times(Mat4.translation(Vec.of(1, 1, -4))).times(left_wings);
+
+    let right_front = b_center.times(Mat4.translation(Vec.of(-1, 1, 4))).times(right_wings);
+    let right_back = b_center.times(Mat4.translation(Vec.of(-1, 1, -4))).times(right_wings);
+
+    this.shapes.box.draw(graphics_state, left_front.times(wing_size), this.purple);
+    this.shapes.box.draw(graphics_state, left_back.times(wing_size), this.purple);
+
+    this.shapes.box.draw(graphics_state, right_front.times(wing_size), this.purple);
+    this.shapes.box.draw(graphics_state, right_back.times(wing_size), this.purple);
+  }
+
+  draw_legs(graphics_state, b_center, angle_time) {
+    let leg_size = Mat4.scale([.25, 1, .25])
+    let angle = Math.PI*(angle_time/4000)*(4/5);
+
+    let left_legs = Mat4.rotation(angle, Vec.of(0, 0, 1)).times(Mat4.translation([.25, -1, .25]));
+    let right_legs = Mat4.rotation(-angle, Vec.of(0, 0, 1)).times(Mat4.translation([-.25, -1, .25]));
+
+    // Top Portion of Legs
+    let left_front = b_center.times(Mat4.translation(Vec.of(1, -1, 3.5))).times(left_legs);
+    let left_mid = b_center.times(Mat4.translation(Vec.of(1, -1, 1.75))).times(left_legs);
+    let left_back = b_center.times(Mat4.translation(Vec.of(1, -1, 0))).times(left_legs);
+
+    let right_front = b_center.times(Mat4.translation(Vec.of(-1, -1, 3.5))).times(right_legs);
+    let right_mid = b_center.times(Mat4.translation(Vec.of(-1, -1, 1.75))).times(right_legs);
+    let right_back = b_center.times(Mat4.translation(Vec.of(-1, -1, 0))).times(right_legs);
+
+    this.shapes.box.draw(graphics_state, left_front.times(leg_size), this.purple);
+    this.shapes.box.draw(graphics_state, left_mid.times(leg_size), this.purple);
+    this.shapes.box.draw(graphics_state, left_back.times(leg_size), this.purple);
+
+    this.shapes.box.draw(graphics_state, right_front.times(leg_size), this.purple);
+    this.shapes.box.draw(graphics_state, right_mid.times(leg_size), this.purple);
+    this.shapes.box.draw(graphics_state, right_back.times(leg_size), this.purple);
+
+    // Bottom Portion of Legs
+    let l2 = Mat4.translation(Vec.of(-.25, -1, 0)).times(Mat4.rotation(2*-angle, Vec.of(0, 0, 1))).times(Mat4.translation([.25, -1, 0]));
+    let left_front2 = left_front.times(l2);
+    let left_mid2 = left_mid.times(l2);
+    let left_back2 = left_back.times(l2);
+
+    let r2 = Mat4.translation(Vec.of(.25, -1, 0)).times(Mat4.rotation(2*angle, Vec.of(0, 0, 1))).times(Mat4.translation([-.25, -1, 0]));
+    let right_front2 = right_front.times(r2);
+    let right_mid2 = right_mid.times(r2);
+    let right_back2 = right_back.times(r2);
+
+    this.shapes.box.draw(graphics_state, right_front2.times(leg_size), this.white);
+    this.shapes.box.draw(graphics_state, right_mid2.times(leg_size), this.white);
+    this.shapes.box.draw(graphics_state, right_back2.times(leg_size), this.white);
+
+    this.shapes.box.draw(graphics_state, left_front2.times(leg_size), this.white);
+    this.shapes.box.draw(graphics_state, left_mid2.times(leg_size), this.white);
+    this.shapes.box.draw(graphics_state, left_back2.times(leg_size), this.white);
+  }  
+  
+  draw_antennas(graphics_state, head_center, angle_time) {
+    let antenna_size = Mat4.scale([.125, .25, .125]);
+    let tip_size = Mat4.scale([.375, .375, .375]);
+    let angle = Math.PI/6*(angle_time/4000);
+
+    // Base of Antenna
+    let rr = Mat4.rotation(Math.PI/4, Vec.of(1, 0, -1)).times(Mat4.rotation(-Math.PI/3, Vec.of(0, 1, 0)));
+    let rl = Mat4.rotation(Math.PI/4, Vec.of(1, 0, 1)).times(Mat4.rotation(Math.PI/3, Vec.of(0, 1, 0)));
+    let left = head_center.times(rr).times(Mat4.translation(Vec.of(0, 1.75, 0)));
+    let right = head_center.times(rl).times(Mat4.translation(Vec.of(0, 1.75, 0)));
+
+    this.shapes.box.draw(graphics_state, left.times(antenna_size), this.purple);
+    this.shapes.box.draw(graphics_state, right.times(antenna_size), this.purple);
+
+    var lprev = left;
+    var rprev = right;
+
+    // 8 Swaying Blocks
+    for(var i = 1; i < 9; i++) {
+      lprev = lprev.times(Mat4.translation(Vec.of(0.125, 0.25, 0))).times(Mat4.rotation(-angle, Vec.of(0, 0, 1))).times(Mat4.translation(Vec.of(-0.125, .25, 0)));
+      rprev = rprev.times(Mat4.translation(Vec.of(-0.125, 0.25, 0))).times(Mat4.rotation(angle, Vec.of(0, 0, 1))).times(Mat4.translation(Vec.of(0.125, .25, 0)));
+
+      this.shapes.box.draw(graphics_state, lprev.times(antenna_size), this.purple);
+      this.shapes.box.draw(graphics_state, rprev.times(antenna_size), this.purple);
+    }
+
+    // Ball Tips
+    let left_tip = lprev.times(Mat4.translation(Vec.of(0, .625, 0)));
+    let right_tip = rprev.times(Mat4.translation(Vec.of(0, .625, 0)));
+
+    this.shapes.ball.draw(graphics_state, left_tip.times(tip_size), this.white);
+    this.shapes.ball.draw(graphics_state, right_tip.times(tip_size), this.white);
+  }
+}
+</script>
+<style>
+  table { border-collapse: collapse; display:block; overflow-x: auto; }
+  table, th, td { border: 2px solid black; vertical-align: top; white-space: nowrap }
+  th, td { overflow: hidden;  }
+  button { position: relative; background-color: #4C9F50; color: white; padding: 6px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2); transition: background-color .3s, transform .3s }
+  button:hover, button:focus { transform: scale(1.2); color:gold }
+  .dropdown { display:inline-block }
+  .dropdown-content { display: none; position: absolute; background-color: #f9f9f9; min-width: 100px; overflow: auto; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2) }
+  .dropdown-content a { color: black; padding: 4px 4px; display: block }
+  .dropdown a:hover { background-color: #f1f1f1 }
+  .show { display:inline-block }
+</style>
+</head><body>
+<div id="canvases"></div>
+<table id="control_buttons" class="dropdown" style="display:block; width: 70%;  border: 0px; margin: 0 0 50px 0"><tr></tr></table>
+<div id="code_display" style="font-family: monospace; white-space: pre; margin: 50px 0" ></div>
+<table id="class_list" class="dropdown" style="display:block; border: 0px; border-spacing: 10px " >
+<tr><td colspan=2>Click below to navigate through all classes that are defined. <br>&nbsp;<br>Main demo: <span name="main_demo_link"></span></td></tr>
+<tr style="text-align:center"><td>tinywebgl-ucla.js</td><td>dependencies.js</td></tr><tr></tr></table>
+</body></html>

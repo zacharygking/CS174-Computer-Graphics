@@ -1,0 +1,46 @@
+<!-- Graphics Example Code.  index.html - The web page document containing the canvas (drawing surface), that launches your javascript files.  By Garett //-->
+<!DOCTYPE html> <html> <head> <meta charset="UTF-8"/> <link rel="icon" href="assets/fav.ico">
+<script type="text/javascript" src="tinywebgl-ucla.js" ></script>  <!--  Javascript "include" files.  Any code in them gets executed as part of the page loading. //-->
+<script type="text/javascript" src="dependencies.js"   ></script>
+<script type="text/javascript" src="project.js"></script>
+
+<style>
+  table { border-collapse: collapse; display:block; overflow-x: auto; }
+  table, th, td { border: 2px solid black; vertical-align: top; white-space: nowrap }
+  th, td { overflow: hidden;  }
+  button { position: relative; background-color: #4C9F50; color: white; padding: 6px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2); transition: background-color .3s, transform .3s }
+  button:hover, button:focus { transform: scale(1.2); color:gold }
+  .dropdown { display:inline-block }
+  .dropdown-content { display: none; position: absolute; background-color: #f9f9f9; min-width: 100px; overflow: auto; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2) }
+  .dropdown-content a { color: black; padding: 4px 4px; display: block }
+  .dropdown a:hover { background-color: #f1f1f1 }
+  .show { display:inline-block }
+</style>
+</head><body>
+<div id="explanation_section"></div>
+<div id="canvases"></div>
+<table id="control_buttons" class="dropdown" style="display:block; width: 70%;  border: 0px; margin: 0 0 50px 0"><tr></tr></table>
+<div id="code_panel" style="font-family: monospace; white-space: pre; margin: 50px 0" >
+  <div id="code_display"  data-displayed="" ></div>
+  <button id="edit_button" style="display:none">Start editing</button> 
+  <table id="class_list" class="dropdown" style="display:block; border: 0px; border-spacing: 10px " >
+    <tr><td colspan="2">Click below to navigate through all classes that are defined. <br>&nbsp;<br>Main demo: <span name="main_demo_link"></span></td></tr>
+    <tr style="text-align:center"><td>tinywebgl-ucla.js</td><td>dependencies.js</td></tr><tr></tr></table>
+</div>
+<form name="new_demo_source_code" style="display:none">  
+  <p style="margin: 50px 0"><i><b>What can I put here?</b></i>  A JavaScript class, with any valid JavaScript inside.  Your code can use classes from this demo, or from ANY demo on the 
+  encyclopedia of code --  the dependencies will automatically be pulled in to run your demo!<br></p>
+  <textarea rows="30" cols="140" name="new_demo_code"></textarea><br>
+  <div id="submit_result" style="margin: 10px 0"></div>
+  <button type="submit" style="margin: 0px 50px 0px 0px">Save as new webpage</button> 
+  <input type="text" name="author"   placeholder="Author name">
+  <input type="text" name="password" placeholder="Password" style="display:none">
+  <span id="overwrite_panel" style="display:none"><label>Overwrite?<input type="checkbox" name="overwrite" autocomplete="off"></label></span>
+  <span id="beginner_panel"><label>Beginner Mode<input type="checkbox" checked onchange="document.querySelector('#expert_panel').style.display='block'; beginner_panel.style.display='none'"></label></span>
+  <div id="expert_panel" style="display:none;"><label><input type="checkbox" name="finished" autocomplete="off">
+    Optional:  This demo is finished; consider it for public listing on the main page.  
+    I believe that this demo is the one true way to minimalistically do what its name says.
+    The code's readability and structure are so good as to maximize how easy it is to memorize it.
+    </label></div>  
+</form>
+</body></html>

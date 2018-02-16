@@ -1,0 +1,106 @@
+<!-- Graphics Example Code.  index.html - The web page document containing the canvas (drawing surface), that launches your javascript files.  By Garett //-->
+<!DOCTYPE html> <html> <head> <meta charset="UTF-8"/> <link rel="icon" href="assets/fav.ico">
+<script type="text/javascript" src="tinywebgl-ucla.js" ></script>  <!--  Javascript "include" files.  Any code in them gets executed as part of the page loading. //-->
+<script type="text/javascript" src=  "dependencies.js" ></script>
+<script type="text/javascript" src=    "test-cases.js" ></script>
+<script type="text/javascript" src=    "ray-tracer.js" ></script>
+<script type="text/javascript"> "use strict"    
+  window.onload = function init()        // ********************* THE ENTRY POINT OF THE WHOLE PROGRAM STARTS HERE ********************* 
+    { window.contexts = {};                                                            // A global variable, "contexts".  Browsers support up to 16 WebGL contexts per page.
+      
+      const scenes  = [ "Ray_Tracer", "Movement_Controls", "Global_Info_Table" ]; // Register some scenes to the "Canvas_Manager" object -- which WebGL calls
+                                                                                    // upon every time a draw / keyboard / mouse event happens.        
+      if( eval( "typeof " + scenes[0] ) !== "undefined" )                           // Check the scene classe's validity, then make the canvases:
+      { document.getElementById( "canvases" ).appendChild( Object.assign( document.createElement( "canvas" ), { id: "main_canvas", width: 800, height: 600 } ) );
+        contexts[ "main_canvas" ] = new Canvas_Manager( "main_canvas", Color.of( 0,0,0,1 ), scenes );   // Manage the WebGL canvas.  Second parameter sets background color.
+        for( let c in contexts ) contexts[ c ].render();     // Call render() for each WebGL context on this page.  Then render() will re-queue itself for more calls.
+        
+        Code_Manager.display_code( eval( scenes[0] ) );                                  // Display the code for our demo on the page, starting with the first scene in the list.
+        for( let list of [ core_dependencies, all_dependencies ] )
+        document.querySelector( "#class_list" ).rows[2].appendChild( Object.assign( document.createElement( "td" ), { 
+          innerHTML: list.reduce( (acc, x) => acc += "<a href='javascript:void(0);' onclick='Code_Manager.display_code(" + x + ")'>" + x + "</a><br>", "" ) } ) );        
+        document.getElementsByName( "main_demo_link" )[0].innerHTML = "<a href='javascript:void(0);' onclick='Code_Manager.display_code(" + scenes[0] + ")'>" + scenes[0] + "</a><br>";
+        document.querySelector("#code_display").innerHTML = "Below is the code for the demo that's running:<br>&nbsp;<br>" + document.querySelector("#code_display").innerHTML;             
+      }
+      // Make the navigator bar at the top.
+      for( let l of [ "Surfaces_Demo", "Star", "Springs_Demo", "Out_Of_Body_Demo", "Text_Demo", "Many_Light_Demo", "Bump_Map_Demo_And_Mesh_Loader", "Ray_Tracer" ] )
+        document.getElementById( "nav_dropdown" ).appendChild( Object.assign( document.createElement( "a" ), { href: "http://encyclopediaofcode.glitch.me/" + l, innerHTML: l } ) );
+      
+      for( let w of ["<a href='https://www.cs.cmu.edu/~baraff/sigcourse/notesd1.pdf' target='blank'>Rigid body dynamics from SIGGRAPH course</a>",
+                     "<a href='https://www.cs.cmu.edu/~baraff/sigcourse/notesd2.pdf' target='blank'>Rigid body non-penetration from SIGGRAPH course</a>", 
+                     "Shadow mapping",  "Any article animating a Computer Science concept",  "Improvements to existing demos" ] )
+        document.getElementById( "wanted_dropdown" ).appendChild( Object.assign( document.createElement( "a" ), { innerHTML: w } ) );
+      
+      document.querySelector("#edit_button").addEventListener('click', () => {                                            // Make the code editing form.
+        code_panel.style.display=class_list.style.display='none'; new_demo_source_code.style.display='block'; 
+        document.getElementsByName( 'new_demo_code' )[0].value=code_display.dataset.displayed.toString() } )
+      const form = document.forms.namedItem("new_demo_source_code");
+      form.addEventListener('submit', function(event) 
+        { if( document.getElementsByName( "finished" )[0].checked )
+            alert( "Your demo will be submitted.  If approved, you will start being asked for a password to make any further updates to it.  This password "
+                 + "will appear right now, below the submit button, and then (assuming submission worked) it will never appear again.  Write it down." );
+          var xhr = new XMLHttpRequest();
+          xhr.open("POST", "/submit-demo?Unapproved", true);
+          xhr.responseType = "json";
+          xhr.onload = function(event) 
+          { if (xhr.status != 200) { document.querySelector("#submit_result").textContent = "Error " + xhr.status + " when trying to upload."; return }
+            document.querySelector("#submit_result").textContent = this.response.message;
+            // if( this.response.hide_finished_checkbox ) { document.getElementsByName( "finished" )[0].checked = false; expert_panel.style.display = "none" }
+            if( this.response.show_password  ) document.getElementsByName( "password" )[0] .style.display = "inline";
+            if( this.response.show_overwrite ) document.querySelector( "#overwrite_panel" ).style.display = "inline";
+          };
+          xhr.setRequestHeader("Content-Type", "application/json");
+          xhr.send( JSON.stringify( Array.from( form.elements ).reduce( ( accum, elem ) => 
+            { if( elem.value && !( ['checkbox', 'radio'].includes(elem.type) && !elem.checked ) ) accum[elem.name] = elem.value; return accum }, {} ) ) );
+          event.preventDefault();
+        }, false);      
+    }
+</script>
+<style>
+  * { font-family: monospace }
+  table { border-collapse: collapse; display:block; overflow-x: auto; }
+  table, th, td { border: 2px solid black; vertical-align: top; white-space: nowrap }
+  th, td { overflow: hidden;  }
+  button { position: relative; background-color: #4C9F50; color: white; padding: 6px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2); transition: background-color .3s, transform .3s }
+  button:hover, button:focus { transform: scale(1.2); color:gold }
+  .dropdown { display:inline-block }
+  .dropdown-content { display: none; position: absolute; z-index: 1; background-color: #f9f9f9; padding: 6px; min-width: 100px; overflow: auto; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2) }
+  .dropdown-content a { color: black; padding: 4px 4px; display: block }
+  .dropdown a:hover { background-color: #f1f1f1 }
+  .show { display:inline-block }
+</style>
+</head><body>
+<table id="nav_menu" style="display:table; border:0px; width:100%"><tr><td style="background-color: cornflowerblue;border:0px;">  
+  <button style="background-color: blue;margin-left:30px;" onclick="document.getElementById('nav_dropdown').classList.toggle('show'); return false;">More articles and pretty animations -&gt;</button> 
+    <div id="nav_dropdown" class="dropdown-content"></div>
+  <button onclick="location.href='http://encyclopediaofcode.glitch.me/'" style="background-color: blue;margin-left:40px;">Main page</button>
+  <button style="background-color: blue;margin-left:40px;" onclick="document.getElementById('wanted_dropdown').classList.toggle('show'); return false;">Wanted articles -&gt;</button>
+    <div id="wanted_dropdown" class="dropdown-content"></div>
+</td></tr></table>
+<div id="explanation_section"></div>
+<div id="canvases"></div>
+<table id="control_buttons" class="dropdown" style="display:block; width: 70%;  border: 0px; margin: 0 0 50px 0"><tr></tr></table>
+<div id="code_panel" style="font-family: monospace; white-space: pre; margin: 50px 0" >
+  <div id="code_display" data-displayed=""></div>
+  <button id="edit_button">Start editing</button> 
+  <table id="class_list" class="dropdown" style="display:block; border: 0px; border-spacing: 10px " >
+    <tr><td colspan="2">Click below to navigate through all classes that are defined. <p style="text-align:center; font-weight:bold">featured-scene.js<br>Main Scene: <span name="main_demo_link"></span></p></td></tr>
+    <tr style="text-align:center"><td><b>tinywebgl-ucla.js</b><br>(Always the same)</td><td><b>dependencies.js</b><br>(Different for every demo)</td></tr><tr></tr></table>
+</div>
+<form name="new_demo_source_code" style="display:none">  
+  <p style="margin: 50px 0"><i><b>What can I put here?</b></i>  A JavaScript class, with any valid JavaScript inside.  Your code can use classes from this demo, or from ANY demo on the 
+  encyclopedia of code --  the dependencies will automatically be pulled in to run your demo!<br></p>
+  <textarea rows="30" cols="140" style="white-space: pre;" name="new_demo_code"></textarea><br>
+  <div id="submit_result" style="margin: 10px 0"></div>
+  <button type="submit" style="margin: 0px 50px 0px 0px">Save as new webpage</button> 
+  <input type="text" name="author"   placeholder="Author name">
+  <input type="text" name="password" placeholder="Password" style="display:none">
+  <span id="overwrite_panel" style="display:none"><label>Overwrite?<input type="checkbox" name="overwrite" autocomplete="off"></label></span>
+  <span id="beginner_panel"><label>Beginner Mode<input type="checkbox" checked onchange="document.querySelector('#expert_panel').style.display='block'; beginner_panel.style.display='none'"></label></span>
+  <div id="expert_panel" style="display:none;"><label><input type="checkbox" name="finished" autocomplete="off">
+    Optional:  This demo is finished; consider it for public listing on the main page.  
+    I believe that this demo is the one true way to minimalistically do what its name says.
+    The code's readability and structure are so good as to maximize how easy it is to memorize it.
+    </label></div>  
+</form>
+</body></html>
